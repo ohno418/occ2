@@ -5,6 +5,6 @@ test: occ
 	./test.sh
 
 clean:
-	rm -f occ *.o tmp
+	rm -f occ *.o tmp*
 
 .PHONY: test clean
