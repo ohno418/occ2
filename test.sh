@@ -23,5 +23,6 @@ assert 25 "2+23"
 assert 11 "23-12"
 assert 57 "42+3+12"
 assert 33 "42+3-12"
+assert 33 "42  + 3- 12"
 
 echo OK
