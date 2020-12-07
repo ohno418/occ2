@@ -1,11 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
+static void error(char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    fprintf(stderr, "invalid number of arguments\n");
-    return 1;
-  }
+  if (argc != 2)
+    error("%s: invalid number of arguments", argv[0]);
 
   char *p = argv[1];
 
@@ -33,11 +40,10 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    fprintf(stderr, "\n");
-    return 1;
+    error("unexpected character '%c'", *p);
   }
 
   printf("  ret\n");
 
-  return 0;
+  exit(0);
 }
