@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+// Report an error and exit.
 static void error(char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
