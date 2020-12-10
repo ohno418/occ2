@@ -143,5 +143,5 @@ int main(int argc, char **argv) {
   }
 
   printf("  ret\n");
-  exit(0);
+  return 0;
 }
