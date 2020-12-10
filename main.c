@@ -255,6 +255,8 @@ static void gen_expr(Node *node) {
     printf("  cqo\n");
     printf("  idiv rdi\n");
     return;
+  default:
+    error("unknown node");
   }
 }
 
