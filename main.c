@@ -121,6 +121,7 @@ static Token *tokenize(void) {
 typedef enum {
   ND_ADD, // +
   ND_SUB, // -
+  ND_MUL, // *
   ND_NUM, // Integer
 } NodeKind;
 
@@ -151,36 +152,54 @@ static Node *new_binary(NodeKind kind, Node *lhs, Node *rhs) {
   return node;
 }
 
+static Node *expr(Token **rest, Token *tok);
+static Node *mul(Token **rest, Token *tok);
+static Node *num(Token **rest, Token *tok);
+
+// expr = mul ("+" mul | "-" mul)*
+static Node *expr(Token **rest, Token *tok) {
+  Node *node = mul(&tok, tok);
+
+  for (;;) {
+    if (equal(tok, "+")) {
+      tok = tok->next;
+      node = new_binary(ND_ADD, node, mul(&tok, tok));
+      continue;
+    }
+
+    if (equal(tok, "-")) {
+      tok = tok->next;
+      node = new_binary(ND_SUB, node, mul(&tok, tok));
+      continue;
+    }
+
+    *rest = tok;
+    return node;
+  }
+}
+
+// mul = num ("*" num)*
+static Node *mul(Token **rest, Token *tok) {
+  Node *node = num(&tok, tok);
+
+  for (;;) {
+    if (equal(tok, "*")) {
+      tok = tok->next;
+      node = new_binary(ND_MUL, node, num(&tok, tok));
+      continue;
+    }
+
+    *rest = tok;
+    return node;
+  }
+}
+
 static Node *num(Token **rest, Token *tok) {
   if (tok->kind != TK_NUM)
     error_tok(tok, "expected a number");
 
   Node *node = new_num(tok->val);
   *rest = tok->next;
-  return node;
-}
-
-// expr = num ("+" num | "-" num)*
-static Node *expr(Token **rest, Token *tok) {
-  Node *node = num(&tok, tok);
-
-  while (tok->kind != TK_EOF) {
-    if (equal(tok, "+")) {
-      tok = tok->next;
-      node = new_binary(ND_ADD, node, num(&tok, tok));
-      continue;
-    }
-
-    if (equal(tok, "-")) {
-      tok = tok->next;
-      node = new_binary(ND_SUB, node, num(&tok, tok));
-      continue;
-    }
-
-    error_tok(tok, "invalid token");
-  }
-
-  *rest = tok;
   return node;
 }
 
@@ -213,6 +232,9 @@ static void gen_expr(Node *node) {
     return;
   case ND_SUB:
     printf("  sub rax, rdi\n");
+    return;
+  case ND_MUL:
+    printf("  imul rax, rdi\n");
     return;
   }
 }
