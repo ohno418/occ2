@@ -122,6 +122,7 @@ typedef enum {
   ND_ADD, // +
   ND_SUB, // -
   ND_MUL, // *
+  ND_DIV, // /
   ND_NUM, // Integer
 } NodeKind;
 
@@ -178,7 +179,7 @@ static Node *expr(Token **rest, Token *tok) {
   }
 }
 
-// mul = num ("*" num)*
+// mul = num ("*" num | "/" num)*
 static Node *mul(Token **rest, Token *tok) {
   Node *node = num(&tok, tok);
 
@@ -186,6 +187,12 @@ static Node *mul(Token **rest, Token *tok) {
     if (equal(tok, "*")) {
       tok = tok->next;
       node = new_binary(ND_MUL, node, num(&tok, tok));
+      continue;
+    }
+
+    if (equal(tok, "/")) {
+      tok = tok->next;
+      node = new_binary(ND_DIV, node, num(&tok, tok));
       continue;
     }
 
@@ -235,6 +242,10 @@ static void gen_expr(Node *node) {
     return;
   case ND_MUL:
     printf("  imul rax, rdi\n");
+    return;
+  case ND_DIV:
+    printf("  cqo\n");
+    printf("  idiv rdi\n");
     return;
   }
 }
