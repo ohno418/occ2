@@ -18,7 +18,6 @@ assert() {
 
 assert 0 0
 assert 42 42
-
 assert 25 '2+23'
 assert 11 '23-12'
 assert 57 '42+3+12'
