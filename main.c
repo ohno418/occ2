@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+//
+// Tokenizer
+//
+
 typedef enum {
   TK_PUNCT, // Puctuators
   TK_NUM,   // Numeric literals
@@ -62,6 +66,17 @@ static Token *new_token(TokenKind kind, char *loc, int len) {
   return tok;
 }
 
+// Surely get an number from the given token.
+static int get_number(Token *tok) {
+  if (tok->kind != TK_NUM)
+    error_tok(tok, "expected a number");
+  return tok->val;
+}
+
+static bool equal(Token *tok, char *op) {
+  return tok->len == strlen(op) && memcmp(tok->loc, op, tok->len) == 0;
+}
+
 // Tokenize `current_input` and returns new tokens.
 static Token *tokenize(void) {
   char *p = current_input;
@@ -85,8 +100,8 @@ static Token *tokenize(void) {
       continue;
     }
 
-    // Puctuator
-    if (*p == '+' || *p == '-') {
+    // Puctuators
+    if (ispunct(*p)) {
       cur = cur->next = new_token(TK_PUNCT, p, 1);
       p++;
       continue;
@@ -99,15 +114,107 @@ static Token *tokenize(void) {
   return head.next;
 }
 
-// Surely get an number from the given token.
-static int get_number(Token *tok) {
-  if (tok->kind != TK_NUM)
-    error_tok(tok, "expected a number");
-  return tok->val;
+//
+// Parser
+//
+
+typedef enum {
+  ND_ADD, // +
+  ND_SUB, // -
+  ND_NUM, // Integer
+} NodeKind;
+
+typedef struct Node Node;
+struct Node {
+  NodeKind kind;
+  Node *lhs; // Left-hand side
+  Node *rhs; // Right-hand side
+  int val;   // Used if kind is ND_NUM
+};
+
+static Node *new_node(NodeKind kind) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  return node;
 }
 
-static bool equal(Token *tok, char *op) {
-  return tok->len == strlen(op) && memcmp(tok->loc, op, tok->len) == 0;
+static Node *new_num(int val) {
+  Node *node = new_node(ND_NUM);
+  node->val = val;
+  return node;
+}
+
+static Node *new_binary(NodeKind kind, Node *lhs, Node *rhs) {
+  Node *node = new_node(kind);
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+static Node *num(Token **rest, Token *tok) {
+  if (tok->kind != TK_NUM)
+    error_tok(tok, "expected a number");
+
+  Node *node = new_num(tok->val);
+  *rest = tok->next;
+  return node;
+}
+
+// expr = num ("+" num | "-" num)*
+static Node *expr(Token **rest, Token *tok) {
+  Node *node = num(&tok, tok);
+
+  while (tok->kind != TK_EOF) {
+    if (equal(tok, "+")) {
+      tok = tok->next;
+      node = new_binary(ND_ADD, node, num(&tok, tok));
+      continue;
+    }
+
+    if (equal(tok, "-")) {
+      tok = tok->next;
+      node = new_binary(ND_SUB, node, num(&tok, tok));
+      continue;
+    }
+
+    error_tok(tok, "invalid token");
+  }
+
+  *rest = tok;
+  return node;
+}
+
+//
+// Code generator
+//
+
+static void push(void) {
+  printf("  push rax\n");
+}
+
+static void pop(char *arg) {
+  printf("  pop %s\n", arg);
+}
+
+static void gen_expr(Node *node) {
+  if (node->kind == ND_NUM) {
+    printf("  mov rax, %d\n", node->val);
+    return;
+  }
+
+  gen_expr(node->rhs);
+  push();              // rhs on rax
+  gen_expr(node->lhs);
+  pop("rdi");          // lhs on rdi
+
+  switch (node->kind) {
+  case ND_ADD:
+    printf("  add rax, rdi\n");
+    return;
+  case ND_SUB:
+    printf("  sub rax, rdi\n");
+    return;
+  }
 }
 
 int main(int argc, char **argv) {
@@ -116,32 +223,19 @@ int main(int argc, char **argv) {
 
   current_input = argv[1];
   Token *tok = tokenize();
+  Node *node = expr(&tok, tok);
+
+  if (tok->kind != TK_EOF)
+    error_tok(tok, "extra token");
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("\n");
   printf("main:\n");
 
-  // The first token must be a number.
-  printf("  mov rax, %d\n", get_number(tok));
-  tok = tok->next;
-
-  while (tok->kind != TK_EOF) {
-    if (equal(tok, "+")) {
-      printf("  add rax, %d\n", get_number(tok->next));
-      tok = tok->next->next;
-      continue;
-    }
-
-    if (equal(tok, "-")) {
-      printf("  sub rax, %d\n", get_number(tok->next));
-      tok = tok->next->next;
-      continue;
-    }
-
-    error_tok(tok, "invalid token");
-  }
-
+  // Traverse the AST to emit assembly.
+  gen_expr(node);
   printf("  ret\n");
+
   return 0;
 }
