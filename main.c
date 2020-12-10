@@ -66,15 +66,14 @@ static Token *new_token(TokenKind kind, char *loc, int len) {
   return tok;
 }
 
-// Surely get an number from the given token.
-static int get_number(Token *tok) {
-  if (tok->kind != TK_NUM)
-    error_tok(tok, "expected a number");
-  return tok->val;
-}
-
 static bool equal(Token *tok, char *op) {
   return tok->len == strlen(op) && memcmp(tok->loc, op, tok->len) == 0;
+}
+
+static Token *skip(Token *tok, char *s) {
+  if (!equal(tok, s))
+    error_tok(tok, "expected '%s'", s);
+  return tok->next;
 }
 
 // Tokenize `current_input` and returns new tokens.
@@ -155,7 +154,7 @@ static Node *new_binary(NodeKind kind, Node *lhs, Node *rhs) {
 
 static Node *expr(Token **rest, Token *tok);
 static Node *mul(Token **rest, Token *tok);
-static Node *num(Token **rest, Token *tok);
+static Node *primary(Token **rest, Token *tok);
 
 // expr = mul ("+" mul | "-" mul)*
 static Node *expr(Token **rest, Token *tok) {
@@ -179,20 +178,20 @@ static Node *expr(Token **rest, Token *tok) {
   }
 }
 
-// mul = num ("*" num | "/" num)*
+// mul = primary ("*" primary | "/" primary)*
 static Node *mul(Token **rest, Token *tok) {
-  Node *node = num(&tok, tok);
+  Node *node = primary(&tok, tok);
 
   for (;;) {
     if (equal(tok, "*")) {
       tok = tok->next;
-      node = new_binary(ND_MUL, node, num(&tok, tok));
+      node = new_binary(ND_MUL, node, primary(&tok, tok));
       continue;
     }
 
     if (equal(tok, "/")) {
       tok = tok->next;
-      node = new_binary(ND_DIV, node, num(&tok, tok));
+      node = new_binary(ND_DIV, node, primary(&tok, tok));
       continue;
     }
 
@@ -201,13 +200,22 @@ static Node *mul(Token **rest, Token *tok) {
   }
 }
 
-static Node *num(Token **rest, Token *tok) {
-  if (tok->kind != TK_NUM)
-    error_tok(tok, "expected a number");
+// primary = "(" expr ")" | num
+static Node *primary(Token **rest, Token *tok) {
+  if (equal(tok, "(")) {
+    tok = tok->next;
+    Node *node = expr(&tok, tok);
+    *rest = skip(tok, ")");
+    return node;
+  }
 
-  Node *node = new_num(tok->val);
-  *rest = tok->next;
-  return node;
+  if (tok->kind == TK_NUM) {
+    Node *node = new_num(tok->val);
+    *rest = tok->next;
+    return node;
+  }
+
+  error_tok(tok, "expected an expression");
 }
 
 //

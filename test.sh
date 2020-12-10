@@ -28,5 +28,7 @@ assert 35 '5*7'
 assert 38 '3+5*7'
 assert 4 '8/2'
 assert 7 '3+8/2'
+assert 56 '(3+5)*7'
+assert 5 '(3+8)/2'
 
 echo OK
