@@ -81,7 +81,8 @@ static bool starts_with(char *p, char *q) {
 }
 
 static int read_punct_len(char *p) {
-  if (starts_with(p, "==") || starts_with(p, "!="))
+  if (starts_with(p, "==") || starts_with(p, "!=") ||
+      starts_with(p, "<=") || starts_with(p, ">="))
     return 2;
 
   return ispunct(*p) ? 1 : 0;
@@ -137,6 +138,7 @@ typedef enum {
   ND_EQ,  // ==
   ND_NE,  // !=
   ND_LT,  // <
+  ND_LE,  // <=
   ND_NUM, // Integer
 } NodeKind;
 
@@ -204,7 +206,7 @@ static Node *equality(Token **rest, Token *tok) {
   return node;
 }
 
-// relational = add ("<" add | ">" add)
+// relational = add ("<" add | ">" add | "<=" add | ">=" add)
 static Node *relational(Token **rest, Token *tok) {
   Node *node = add(&tok, tok);
 
@@ -216,6 +218,16 @@ static Node *relational(Token **rest, Token *tok) {
   if (equal(tok, ">")) {
     tok = tok->next;
     node = new_binary(ND_LT, add(&tok, tok), node);
+  }
+
+  if (equal(tok, "<=")) {
+    tok = tok->next;
+    node = new_binary(ND_LE, node, add(&tok, tok));
+  }
+
+  if (equal(tok, ">=")) {
+    tok = tok->next;
+    node = new_binary(ND_LE, add(&tok, tok), node);
   }
 
   *rest = tok;
@@ -351,6 +363,11 @@ static void gen_expr(Node *node) {
   case ND_LT:
     printf("  cmp rax, rdi\n");
     printf("  setl al\n");
+    printf("  movzb rax, al\n");
+    return;
+  case ND_LE:
+    printf("  cmp rax, rdi\n");
+    printf("  setle al\n");
     printf("  movzb rax, al\n");
     return;
   default:
