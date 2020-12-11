@@ -76,6 +76,17 @@ static Token *skip(Token *tok, char *s) {
   return tok->next;
 }
 
+static bool starts_with(char *p, char *q) {
+  return strncmp(p, q, strlen(q)) == 0;
+}
+
+static int read_punct_len(char *p) {
+  if (starts_with(p, "=="))
+    return 2;
+
+  return ispunct(*p) ? 1 : 0;
+}
+
 // Tokenize `current_input` and returns new tokens.
 static Token *tokenize(void) {
   char *p = current_input;
@@ -99,9 +110,10 @@ static Token *tokenize(void) {
     }
 
     // Puctuators
-    if (ispunct(*p)) {
-      cur = cur->next = new_token(TK_PUNCT, p, 1);
-      p++;
+    int puct_len = read_punct_len(p);
+    if (puct_len) {
+      cur = cur->next = new_token(TK_PUNCT, p, puct_len);
+      p += puct_len;
       continue;
     }
 
@@ -122,6 +134,7 @@ typedef enum {
   ND_MUL, // *
   ND_DIV, // /
   ND_NEG, // unary -
+  ND_EQ,  // ==
   ND_NUM, // Integer
 } NodeKind;
 
@@ -159,12 +172,32 @@ static Node *new_num(int val) {
 }
 
 static Node *expr(Token **rest, Token *tok);
+static Node *equality(Token **rest, Token *tok);
+static Node *add(Token **rest, Token *tok);
 static Node *mul(Token **rest, Token *tok);
 static Node *unary(Token **rest, Token *tok);
 static Node *primary(Token **rest, Token *tok);
 
-// expr = mul ("+" mul | "-" mul)*
+// expr = equality
 static Node *expr(Token **rest, Token *tok) {
+  return equality(rest, tok);
+}
+
+// equality = add ("==" add)
+static Node *equality(Token **rest, Token *tok) {
+  Node *node = add(&tok, tok);
+
+  if (equal(tok, "==")) {
+    tok = tok->next;
+    node = new_binary(ND_EQ, node, add(&tok, tok));
+  }
+
+  *rest = tok;
+  return node;
+}
+
+// add = mul ("+" mul | "-" mul)*
+static Node *add(Token **rest, Token *tok) {
   Node *node = mul(&tok, tok);
 
   for (;;) {
@@ -278,6 +311,11 @@ static void gen_expr(Node *node) {
   case ND_DIV:
     printf("  cqo\n");
     printf("  idiv rdi\n");
+    return;
+  case ND_EQ:
+    printf("  cmp rax, rdi\n");
+    printf("  sete al\n");
+    printf("  movzb rax, al\n");
     return;
   default:
     error("unknown node");
