@@ -136,6 +136,7 @@ typedef enum {
   ND_NEG, // unary -
   ND_EQ,  // ==
   ND_NE,  // !=
+  ND_LT,  // <
   ND_NUM, // Integer
 } NodeKind;
 
@@ -174,6 +175,7 @@ static Node *new_num(int val) {
 
 static Node *expr(Token **rest, Token *tok);
 static Node *equality(Token **rest, Token *tok);
+static Node *relational(Token **rest, Token *tok);
 static Node *add(Token **rest, Token *tok);
 static Node *mul(Token **rest, Token *tok);
 static Node *unary(Token **rest, Token *tok);
@@ -184,18 +186,36 @@ static Node *expr(Token **rest, Token *tok) {
   return equality(rest, tok);
 }
 
-// equality = add ("==" add | "!=" add)
+// equality = relational ("==" relational | "!=" relational)
 static Node *equality(Token **rest, Token *tok) {
-  Node *node = add(&tok, tok);
+  Node *node = relational(&tok, tok);
 
   if (equal(tok, "==")) {
     tok = tok->next;
-    node = new_binary(ND_EQ, node, add(&tok, tok));
+    node = new_binary(ND_EQ, node, relational(&tok, tok));
   }
 
   if (equal(tok, "!=")) {
     tok = tok->next;
-    node = new_binary(ND_NE, node, add(&tok, tok));
+    node = new_binary(ND_NE, node, relational(&tok, tok));
+  }
+
+  *rest = tok;
+  return node;
+}
+
+// relational = add ("<" add | ">" add)
+static Node *relational(Token **rest, Token *tok) {
+  Node *node = add(&tok, tok);
+
+  if (equal(tok, "<")) {
+    tok = tok->next;
+    node = new_binary(ND_LT, node, add(&tok, tok));
+  }
+
+  if (equal(tok, ">")) {
+    tok = tok->next;
+    node = new_binary(ND_LT, add(&tok, tok), node);
   }
 
   *rest = tok;
@@ -326,6 +346,11 @@ static void gen_expr(Node *node) {
   case ND_NE:
     printf("  cmp rax, rdi\n");
     printf("  setne al\n");
+    printf("  movzb rax, al\n");
+    return;
+  case ND_LT:
+    printf("  cmp rax, rdi\n");
+    printf("  setl al\n");
     printf("  movzb rax, al\n");
     return;
   default:

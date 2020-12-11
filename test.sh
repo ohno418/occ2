@@ -37,5 +37,11 @@ assert 1 '3==3'
 assert 0 '3==4'
 assert 0 '3!=3'
 assert 1 '3!=4'
+assert 1 '24<42'
+assert 0 '42<24'
+assert 0 '24<24'
+assert 0 '24>42'
+assert 1 '42>24'
+assert 0 '24>24'
 
 echo OK
