@@ -81,7 +81,7 @@ static bool starts_with(char *p, char *q) {
 }
 
 static int read_punct_len(char *p) {
-  if (starts_with(p, "=="))
+  if (starts_with(p, "==") || starts_with(p, "!="))
     return 2;
 
   return ispunct(*p) ? 1 : 0;
@@ -135,6 +135,7 @@ typedef enum {
   ND_DIV, // /
   ND_NEG, // unary -
   ND_EQ,  // ==
+  ND_NE,  // !=
   ND_NUM, // Integer
 } NodeKind;
 
@@ -183,13 +184,18 @@ static Node *expr(Token **rest, Token *tok) {
   return equality(rest, tok);
 }
 
-// equality = add ("==" add)
+// equality = add ("==" add | "!=" add)
 static Node *equality(Token **rest, Token *tok) {
   Node *node = add(&tok, tok);
 
   if (equal(tok, "==")) {
     tok = tok->next;
     node = new_binary(ND_EQ, node, add(&tok, tok));
+  }
+
+  if (equal(tok, "!=")) {
+    tok = tok->next;
+    node = new_binary(ND_NE, node, add(&tok, tok));
   }
 
   *rest = tok;
@@ -315,6 +321,11 @@ static void gen_expr(Node *node) {
   case ND_EQ:
     printf("  cmp rax, rdi\n");
     printf("  sete al\n");
+    printf("  movzb rax, al\n");
+    return;
+  case ND_NE:
+    printf("  cmp rax, rdi\n");
+    printf("  setne al\n");
     printf("  movzb rax, al\n");
     return;
   default:
