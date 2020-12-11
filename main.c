@@ -92,9 +92,8 @@ static Token *tokenize(void) {
     // Numeric literal
     if (isdigit(*p)) {
       char *q = p;
-      int num = strtol(p, &p, 10);
-      cur = cur->next = new_token(TK_NUM, p, p - q);
-      cur->val = num;
+      cur = cur->next = new_token(TK_NUM, p, 0);
+      cur->val = strtol(p, &p, 10);
       cur->len = p - q;
       continue;
     }
