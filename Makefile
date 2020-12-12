@@ -1,5 +1,10 @@
-occ: main.o
-	$(CC) -o occ main.o
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
+
+occ: $(OBJS)
+	$(CC) -o $@ $^
+
+$(OBJS): occ.h
 
 test: occ
 	./test.sh
