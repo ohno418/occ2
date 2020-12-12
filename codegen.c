@@ -63,13 +63,23 @@ static void gen_expr(Node *node) {
   }
 }
 
+static void gen_stmt(Node *node) {
+  if (node->kind == ND_EXPR_STMT) {
+    gen_expr(node->lhs);
+    return;
+  }
+
+  error("invalid statement");
+}
+
 void codegen(Node *node) {
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("\n");
   printf("main:\n");
 
-  // Traverse the AST to emit assembly.
-  gen_expr(node);
+  for (Node *n = node; n; n = n->next)
+    gen_stmt(n);
+
   printf("  ret\n");
 }
