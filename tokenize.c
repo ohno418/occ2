@@ -68,7 +68,7 @@ static int read_punct_len(char *p) {
 Token *tokenize(char *p) {
   current_input = p;
 
-  Token head;
+  Token head = {};
   Token *cur = &head;
 
   while (*p) {
