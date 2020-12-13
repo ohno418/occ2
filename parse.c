@@ -195,10 +195,14 @@ static Node *primary(Token **rest, Token *tok) {
 }
 
 // program = stmt*
-Node *parse(Token *tok) {
+Function *parse(Token *tok) {
   Node head = {};
   Node *cur = &head;
+
   while (tok->kind != TK_EOF)
     cur = cur->next = stmt(&tok, tok);
-  return head.next;
+
+  Function *prog = calloc(1, sizeof(Function));
+  prog->body = head.next;
+  return prog;
 }

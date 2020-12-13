@@ -95,7 +95,7 @@ static void gen_stmt(Node *node) {
   error("invalid statement");
 }
 
-void codegen(Node *node) {
+void codegen(Function *prog) {
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
@@ -105,7 +105,7 @@ void codegen(Node *node) {
   printf("  mov rbp, rsp\n");
   printf("  sub rsp, 208\n");
 
-  for (Node *n = node; n; n = n->next) {
+  for (Node *n = prog->body; n; n = n->next) {
     gen_stmt(n);
     assert(depth == 0);
   }

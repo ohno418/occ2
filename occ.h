@@ -53,6 +53,7 @@ typedef enum {
   ND_NUM,       // Integer
 } NodeKind;
 
+// AST node
 typedef struct Node Node;
 struct Node {
   NodeKind kind;
@@ -62,11 +63,27 @@ struct Node {
   char name; // Used if kind == ND_VAR
   int val;   // Used if kind == ND_NUM
 };
+// TODO: name->var
 
-Node *parse(Token *tok);
+// Local varialbe
+// typedef struct Obj Obj;
+// struct Obj {
+//   Obj *next;
+//   char *name;
+//   int offset;
+// };
+
+typedef struct Function Function;
+struct Function {
+  Node *body;
+  // Obj *locals;
+  // int stack_size;
+};
+
+Function *parse(Token *tok);
 
 //
 // codegen.c
 //
 
-void codegen(Node *node);
+void codegen(Function *prog);
