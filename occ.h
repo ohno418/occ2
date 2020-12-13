@@ -11,6 +11,7 @@
 //
 
 typedef enum {
+  TK_IDENT, // Identifiers
   TK_PUNCT, // Puctuators
   TK_NUM,   // Numeric literals
   TK_EOF,   // End-of-file markers
@@ -46,7 +47,9 @@ typedef enum {
   ND_NE,        // !=
   ND_LT,        // <
   ND_LE,        // <=
+  ND_ASSIGN,    // =
   ND_EXPR_STMT, // Expression statement
+  ND_VAR,       // Varialbe
   ND_NUM,       // Integer
 } NodeKind;
 
@@ -56,7 +59,8 @@ struct Node {
   Node *next;
   Node *lhs; // Left-hand side
   Node *rhs; // Right-hand side
-  int val;   // Used if kind is ND_NUM
+  char name; // Used if kind == ND_VAR
+  int val;   // Used if kind == ND_NUM
 };
 
 Node *parse(Token *tok);

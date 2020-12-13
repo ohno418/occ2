@@ -12,6 +12,17 @@ static void pop(char *arg) {
   depth--;
 }
 
+// Compute the absolute address of a given node.
+static void gen_addr(Node *node) {
+  if (node->kind == ND_VAR) {
+    int offset = (node->name - 'a' + 1) * 8;
+    printf("  lea rax, [rbp-%d]\n", offset);
+    return;
+  }
+
+  error("not a lvalue");
+}
+
 static void gen_expr(Node *node) {
   switch (node->kind) {
   case ND_NUM:
@@ -20,6 +31,17 @@ static void gen_expr(Node *node) {
   case ND_NEG:
     gen_expr(node->lhs);
     printf("  neg rax\n");
+    return;
+  case ND_VAR:
+    gen_addr(node);
+    printf("  mov rax, [rax]\n");
+    return;
+  case ND_ASSIGN:
+    gen_addr(node->lhs);
+    push();
+    gen_expr(node->rhs);
+    pop("rdi");
+    printf("  mov [rdi], rax\n");
     return;
   }
 
@@ -78,10 +100,18 @@ void codegen(Node *node) {
   printf(".global main\n");
   printf("main:\n");
 
+  // Prologue
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, 208\n");
+
   for (Node *n = node; n; n = n->next) {
     gen_stmt(n);
     assert(depth == 0);
   }
 
+  // Epilogue
+  printf("  mov rsp, rbp\n");
+  printf("  pop rbp\n");
   printf("  ret\n");
 }

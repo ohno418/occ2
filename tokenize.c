@@ -85,6 +85,13 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    // Identifiers
+    if ('a' <= *p && *p <= 'z') {
+      cur = cur->next = new_token(TK_IDENT, p, 1);
+      p++;
+      continue;
+    }
+
     // Puctuators
     int puct_len = read_punct_len(p);
     if (puct_len) {
