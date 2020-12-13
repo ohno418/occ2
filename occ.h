@@ -12,10 +12,11 @@
 //
 
 typedef enum {
-  TK_IDENT, // Identifiers
-  TK_PUNCT, // Puctuators
-  TK_NUM,   // Numeric literals
-  TK_EOF,   // End-of-file markers
+  TK_IDENT,   // Identifiers
+  TK_PUNCT,   // Puctuators
+  TK_KEYWORD, // Keywords
+  TK_NUM,     // Numeric literals
+  TK_EOF,     // End-of-file markers
 } TokenKind;
 
 typedef struct Token Token;
@@ -59,6 +60,7 @@ typedef enum {
   ND_LT,        // <
   ND_LE,        // <=
   ND_ASSIGN,    // =
+  ND_RETURN,    // "return"
   ND_EXPR_STMT, // Expression statement
   ND_VAR,       // Varialbe
   ND_NUM,       // Integer
