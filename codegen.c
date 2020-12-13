@@ -43,28 +43,25 @@ static void gen_expr(Node *node) {
     printf("  idiv rdi\n");
     return;
   case ND_EQ:
-    printf("  cmp rax, rdi\n");
-    printf("  sete al\n");
-    printf("  movzb rax, al\n");
-    return;
   case ND_NE:
-    printf("  cmp rax, rdi\n");
-    printf("  setne al\n");
-    printf("  movzb rax, al\n");
-    return;
   case ND_LT:
-    printf("  cmp rax, rdi\n");
-    printf("  setl al\n");
-    printf("  movzb rax, al\n");
-    return;
   case ND_LE:
     printf("  cmp rax, rdi\n");
-    printf("  setle al\n");
+
+    if (node->kind == ND_EQ)
+      printf("  sete al\n");
+    else if (node->kind == ND_NE)
+      printf("  setne al\n");
+    else if (node->kind == ND_LT)
+      printf("  setl al\n");
+    else if (node->kind == ND_LE)
+      printf("  setle al\n");
+
     printf("  movzb rax, al\n");
     return;
-  default:
-    error("unknown node");
   }
+
+  error("invalid expression");
 }
 
 static void gen_stmt(Node *node) {
@@ -79,7 +76,6 @@ static void gen_stmt(Node *node) {
 void codegen(Node *node) {
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
-  printf("\n");
   printf("main:\n");
 
   for (Node *n = node; n; n = n->next) {
