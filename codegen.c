@@ -2,6 +2,11 @@
 
 static int depth;
 
+static int count(void) {
+  static int i = 1;
+  return i++;
+}
+
 static void push(void) {
   printf("  push rax\n");
   depth++;
@@ -101,6 +106,16 @@ static void gen_stmt(Node *node) {
     for (Node *n = node->body; n; n = n->next)
       gen_stmt(n);
     return;
+  case ND_IF: {
+    int c = count();
+    gen_expr(node->cond);
+    printf("  cmp rax, 0\n");
+    printf("  je .L.end.%d\n", c);
+    printf(".L.then.%d:\n", c);
+    gen_stmt(node->then);
+    printf(".L.end.%d:\n", c);
+    return;
+  }
   case ND_EXPR_STMT:
     gen_expr(node->lhs);
     return;

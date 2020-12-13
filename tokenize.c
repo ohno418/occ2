@@ -76,7 +76,7 @@ static int read_punct_len(char *p) {
 
 static void convert_keywords(Token *tok) {
   for (Token *t = tok; t->kind != TK_EOF; t = t->next)
-    if (equal(t, "return"))
+    if (equal(t, "return") || equal(t, "if"))
       t->kind = TK_KEYWORD;
 }
 
