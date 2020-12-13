@@ -1,11 +1,15 @@
 #include "occ.h"
 
+static int depth;
+
 static void push(void) {
   printf("  push rax\n");
+  depth++;
 }
 
 static void pop(char *arg) {
   printf("  pop %s\n", arg);
+  depth--;
 }
 
 static void gen_expr(Node *node) {
@@ -78,8 +82,10 @@ void codegen(Node *node) {
   printf("\n");
   printf("main:\n");
 
-  for (Node *n = node; n; n = n->next)
+  for (Node *n = node; n; n = n->next) {
     gen_stmt(n);
+    assert(depth == 0);
+  }
 
   printf("  ret\n");
 }
