@@ -85,5 +85,6 @@ assert 2 '{ if (0) { return 3; } else { return 2; } return 0; }'
 
 assert 2 '{ if (1) { a=2; } else { a=3; } return a; }'
 assert 3 '{ if (0) { a=2; } else { a=3; } return a; }'
+assert 2 '{ if (2-1) { a=2; } else { a=3; } return a; }'
 
 echo OK
