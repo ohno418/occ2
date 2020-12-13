@@ -62,4 +62,9 @@ assert 5 'a=3; z=5; z;'
 assert 8 'a=3; z=5; a+z;'
 assert 6 'a=b=3; a+b;'
 
+assert 3 'foo=3; foo;'
+assert 9 'foo=3; bar=6; foo+bar;'
+assert 12 'foo=bar=6; foo+bar;'
+assert 6 'foo123=6; foo123;'
+
 echo OK

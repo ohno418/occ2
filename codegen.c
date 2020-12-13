@@ -12,11 +12,16 @@ static void pop(char *arg) {
   depth--;
 }
 
+// Round up `n` to the nearest multiple of `align`, For example,
+// align_to(5, 8) returns 8 and align_to(11, 8) returns 16.
+static int align_to(int n, int align) {
+  return (n + align - 1) / align * align;
+}
+
 // Compute the absolute address of a given node.
 static void gen_addr(Node *node) {
-  if (node->kind == ND_VAR) {
-    int offset = (node->name - 'a' + 1) * 8;
-    printf("  lea rax, [rbp-%d]\n", offset);
+  if (node->kind == ND_VAR && node->var) {
+    printf("  lea rax, [rbp-%d]\n", -node->var->offset);
     return;
   }
 
@@ -95,7 +100,18 @@ static void gen_stmt(Node *node) {
   error("invalid statement");
 }
 
+static void assign_lvar_offsets(Function *prog) {
+  int offset = 0;
+  for (Obj *var = prog->locals; var; var = var->next) {
+    offset += 8;
+    var->offset = -offset;
+  }
+  prog->stack_size = align_to(offset, 16);
+}
+
 void codegen(Function *prog) {
+  assign_lvar_offsets(prog);
+
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
@@ -103,7 +119,7 @@ void codegen(Function *prog) {
   // Prologue
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
+  printf("  sub rsp, %d\n", prog->stack_size);
 
   for (Node *n = prog->body; n; n = n->next) {
     gen_stmt(n);

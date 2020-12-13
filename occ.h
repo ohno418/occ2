@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -37,6 +38,16 @@ Token *tokenize(char *p);
 // parse.c
 //
 
+typedef struct Node Node;
+
+// Local varialbe
+typedef struct Obj Obj;
+struct Obj {
+  Obj *next;
+  char *name;
+  int offset;
+};
+
 typedef enum {
   ND_ADD,       // +
   ND_SUB,       // -
@@ -54,30 +65,20 @@ typedef enum {
 } NodeKind;
 
 // AST node
-typedef struct Node Node;
 struct Node {
   NodeKind kind;
   Node *next;
   Node *lhs; // Left-hand side
   Node *rhs; // Right-hand side
-  char name; // Used if kind == ND_VAR
+  Obj *var;  // Used if kind == ND_VAR
   int val;   // Used if kind == ND_NUM
 };
-// TODO: name->var
-
-// Local varialbe
-// typedef struct Obj Obj;
-// struct Obj {
-//   Obj *next;
-//   char *name;
-//   int offset;
-// };
 
 typedef struct Function Function;
 struct Function {
   Node *body;
-  // Obj *locals;
-  // int stack_size;
+  Obj *locals;
+  int stack_size;
 };
 
 Function *parse(Token *tok);
