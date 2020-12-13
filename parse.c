@@ -1,5 +1,14 @@
 #include "occ.h"
 
+static Node *expr(Token **rest, Token *tok);
+static Node *expr_stmt(Token **rest, Token *tok);
+static Node *equality(Token **rest, Token *tok);
+static Node *relational(Token **rest, Token *tok);
+static Node *add(Token **rest, Token *tok);
+static Node *mul(Token **rest, Token *tok);
+static Node *unary(Token **rest, Token *tok);
+static Node *primary(Token **rest, Token *tok);
+
 static Node *new_node(NodeKind kind) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -24,15 +33,6 @@ static Node *new_num(int val) {
   node->val = val;
   return node;
 }
-
-static Node *expr(Token **rest, Token *tok);
-static Node *expr_stmt(Token **rest, Token *tok);
-static Node *equality(Token **rest, Token *tok);
-static Node *relational(Token **rest, Token *tok);
-static Node *add(Token **rest, Token *tok);
-static Node *mul(Token **rest, Token *tok);
-static Node *unary(Token **rest, Token *tok);
-static Node *primary(Token **rest, Token *tok);
 
 // stmt = expr-stmt
 static Node *stmt(Token **rest, Token *tok) {

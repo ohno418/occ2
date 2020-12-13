@@ -3,7 +3,7 @@
 // Input string
 static char *current_input;
 
-// Report an error and exit.
+// Reports an error and exit.
 void error(char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
@@ -34,14 +34,6 @@ void error_tok(Token *tok, char *fmt, ...) {
   exit(1);
 }
 
-static Token *new_token(TokenKind kind, char *loc, int len) {
-  Token *tok = calloc(1, sizeof(Token));
-  tok->kind = kind;
-  tok->loc = loc;
-  tok->len = len;
-  return tok;
-}
-
 bool equal(Token *tok, char *op) {
   return tok->len == strlen(op) && memcmp(tok->loc, op, tok->len) == 0;
 }
@@ -50,6 +42,14 @@ Token *skip(Token *tok, char *s) {
   if (!equal(tok, s))
     error_tok(tok, "expected '%s'", s);
   return tok->next;
+}
+
+static Token *new_token(TokenKind kind, char *loc, int len) {
+  Token *tok = calloc(1, sizeof(Token));
+  tok->kind = kind;
+  tok->loc = loc;
+  tok->len = len;
+  return tok;
 }
 
 static bool starts_with(char *p, char *q) {
@@ -64,10 +64,8 @@ static int read_punct_len(char *p) {
   return ispunct(*p) ? 1 : 0;
 }
 
-// Tokenize `current_input` and returns new tokens.
 Token *tokenize(char *p) {
   current_input = p;
-
   Token head = {};
   Token *cur = &head;
 
