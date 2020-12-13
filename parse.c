@@ -62,7 +62,7 @@ static Obj *new_lvar(char *name) {
 }
 
 // stmt = "return" expr ";"
-//      | "if" "(" expr ")" stmt
+//      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "{" compound-stmt
 //      | expr-stmt
 static Node *stmt(Token **rest, Token *tok) {
@@ -78,6 +78,8 @@ static Node *stmt(Token **rest, Token *tok) {
     node->cond = expr(&tok, tok);
     tok = skip(tok, ")");
     node->then = stmt(&tok, tok);
+    if (equal(tok, "else"))
+      node->els = stmt(&tok, tok->next);
     *rest = tok;
     return node;
   }

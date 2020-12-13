@@ -80,4 +80,7 @@ assert 2 '{ if (0) return 3; return 2; }'
 assert 3 '{ if (1) { return 3; } return 2; }'
 assert 2 '{ if (0) { return 3; } return 2; }'
 
+assert 3 '{ if (1) { return 3; } else { return 2; } return 0; }'
+assert 2 '{ if (0) { return 3; } else { return 2; } return 0; }'
+
 echo OK

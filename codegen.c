@@ -110,9 +110,12 @@ static void gen_stmt(Node *node) {
     int c = count();
     gen_expr(node->cond);
     printf("  cmp rax, 0\n");
-    printf("  je .L.end.%d\n", c);
+    printf("  je .L.else.%d\n", c);
     printf(".L.then.%d:\n", c);
     gen_stmt(node->then);
+    printf(".L.else.%d:\n", c);
+    if (node->els)
+      gen_stmt(node->els);
     printf(".L.end.%d:\n", c);
     return;
   }

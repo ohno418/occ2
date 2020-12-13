@@ -82,6 +82,7 @@ struct Node {
   // "if" statement
   Node *cond;
   Node *then;
+  Node *els;
 
   Obj *var;  // Used if kind == ND_VAR
   int val;   // Used if kind == ND_NUM
