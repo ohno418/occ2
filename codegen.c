@@ -113,6 +113,7 @@ static void gen_stmt(Node *node) {
     printf("  je .L.else.%d\n", c);
     printf(".L.then.%d:\n", c);
     gen_stmt(node->then);
+    printf("  jmp .L.end.%d\n", c);
     printf(".L.else.%d:\n", c);
     if (node->els)
       gen_stmt(node->els);
