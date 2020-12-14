@@ -218,6 +218,54 @@ static Node *relational(Token **rest, Token *tok) {
   }
 }
 
+static Node *new_add(Node *lhs, Node *rhs, Token *tok) {
+  add_type(lhs);
+  add_type(rhs);
+
+  // num + num
+  if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+    return new_binary(ND_ADD, lhs, rhs, tok);
+
+  // ptr + ptr (error)
+  if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_PTR)
+    error_tok(tok, "invalid operands");
+
+  // Canonicalize `num + ptr` to `ptr + num`.
+  if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_PTR) {
+    Node *tmp = lhs;
+    lhs = rhs;
+    rhs = tmp;
+  }
+
+  // ptr + num
+  rhs = new_binary(ND_MUL, rhs, new_num(8, tok), tok);
+  return new_binary(ND_ADD, lhs, rhs, tok);
+}
+
+static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
+  add_type(lhs);
+  add_type(rhs);
+
+  // num - num
+  if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+    return new_binary(ND_SUB, lhs, rhs, tok);
+
+  // ptr - num
+  if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_INT) {
+    rhs = new_binary(ND_MUL, rhs, new_num(8, tok), tok);
+    return new_binary(ND_SUB, lhs, rhs, tok);
+  }
+
+  // ptr - ptr, which returns how many elements are between the two.
+  if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_PTR) {
+    Node *node = new_binary(ND_SUB, lhs, rhs, tok);
+    node->ty = ty_int;
+    return new_binary(ND_DIV, node, new_num(8, tok), tok);
+  }
+
+  error_tok(tok, "invalid operands");
+}
+
 // add = mul ("+" mul | "-" mul)*
 static Node *add(Token **rest, Token *tok) {
   Node *node = mul(&tok, tok);
@@ -226,12 +274,12 @@ static Node *add(Token **rest, Token *tok) {
     Token *start = tok;
 
     if (equal(tok, "+")) {
-      node = new_binary(ND_ADD, node, mul(&tok, tok->next), start);
+      node = new_add(node, mul(&tok, tok->next), start);
       continue;
     }
 
     if (equal(tok, "-")) {
-      node = new_binary(ND_SUB, node, mul(&tok, tok->next), start);
+      node = new_sub(node, mul(&tok, tok->next), start);
       continue;
     }
 

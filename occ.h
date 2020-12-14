@@ -39,6 +39,7 @@ Token *tokenize(char *p);
 // parse.c
 //
 
+typedef struct Type Type;
 typedef struct Node Node;
 
 // Local varialbe
@@ -75,6 +76,7 @@ typedef enum {
 struct Node {
   NodeKind kind;
   Node *next;
+  Type *ty;
   Token *tok; // Representative token
 
   Node *lhs; // Left-hand side
@@ -102,6 +104,24 @@ struct Function {
 };
 
 Function *parse(Token *tok);
+
+//
+// type.c
+//
+
+typedef enum {
+  TY_INT,
+  TY_PTR,
+} TypeKind;
+
+struct Type {
+  TypeKind kind;
+  Type *base;
+};
+
+extern Type *ty_int;
+Type *pointer_to(Type *base);
+void add_type(Node *node);
 
 //
 // codegen.c
