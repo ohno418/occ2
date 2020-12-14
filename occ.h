@@ -73,6 +73,7 @@ typedef enum {
 struct Node {
   NodeKind kind;
   Node *next;
+  Token *tok; // Representative token
 
   Node *lhs; // Left-hand side
   Node *rhs; // Right-hand side
