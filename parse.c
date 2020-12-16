@@ -5,6 +5,7 @@
 Obj *locals;
 
 static Node *compound_stmt(Token **rest, Token *tok);
+static Node *stmt(Token **rest, Token *tok);
 static Node *expr_stmt(Token **rest, Token *tok);
 static Node *expr(Token **rest, Token *tok);
 static Node *assign(Token **rest, Token *tok);
@@ -15,6 +16,7 @@ static Node *mul(Token **rest, Token *tok);
 static Node *unary(Token **rest, Token *tok);
 static Node *primary(Token **rest, Token *tok);
 
+// Find a loval variable by name.
 static Obj *find_var(Token *tok) {
   for (Obj *var = locals; var; var = var->next)
     if (tok->len == strlen(var->name) && !strncmp(tok->loc, var->name, tok->len))
@@ -70,8 +72,8 @@ static Obj *new_lvar(char *name) {
 //      | expr-stmt
 static Node *stmt(Token **rest, Token *tok) {
   if (equal(tok, "return")) {
-    // FIXME?
-    Node *node = new_unary(ND_RETURN, expr(&tok, tok->next), tok);
+    Node *node = new_node(ND_RETURN, tok);
+    node->lhs = expr(&tok, tok->next);
     *rest = skip(tok, ";");
     return node;
   }
@@ -353,16 +355,12 @@ static Node *primary(Token **rest, Token *tok) {
   error_tok(tok, "expected an expression");
 }
 
-// program = stmt*
+// program = "{" compound-stmt
 Function *parse(Token *tok) {
-  Node head = {};
-  Node *cur = &head;
-
-  while (tok->kind != TK_EOF)
-    cur = cur->next = stmt(&tok, tok);
+  tok = skip(tok, "{");
 
   Function *prog = calloc(1, sizeof(Function));
-  prog->body = head.next;
+  prog->body = compound_stmt(&tok, tok);
   prog->locals = locals;
   return prog;
 }

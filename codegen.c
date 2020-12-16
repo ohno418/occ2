@@ -52,19 +52,19 @@ static void gen_expr(Node *node) {
     gen_addr(node);
     printf("  mov rax, [rax]\n");
     return;
-  case ND_ASSIGN:
-    gen_addr(node->lhs);
-    push();
-    gen_expr(node->rhs);
-    pop("rdi");
-    printf("  mov [rdi], rax\n");
-    return;
   case ND_DEREF:
     gen_expr(node->lhs);
     printf("  mov rax, [rax]\n");
     return;
   case ND_ADDR:
     gen_addr(node->lhs);
+    return;
+  case ND_ASSIGN:
+    gen_addr(node->lhs);
+    push();
+    gen_expr(node->rhs);
+    pop("rdi");
+    printf("  mov [rdi], rax\n");
     return;
   }
 
@@ -111,20 +111,11 @@ static void gen_expr(Node *node) {
 
 static void gen_stmt(Node *node) {
   switch (node->kind) {
-  case ND_RETURN:
-    gen_expr(node->lhs);
-    printf("  jmp .L.return\n");
-    return;
-  case ND_BLOCK:
-    for (Node *n = node->body; n; n = n->next)
-      gen_stmt(n);
-    return;
   case ND_IF: {
     int c = count();
     gen_expr(node->cond);
     printf("  cmp rax, 0\n");
     printf("  je .L.else.%d\n", c);
-    printf(".L.then.%d:\n", c);
     gen_stmt(node->then);
     printf("  jmp .L.end.%d\n", c);
     printf(".L.else.%d:\n", c);
@@ -150,6 +141,14 @@ static void gen_stmt(Node *node) {
     printf(".L.end.%d:\n", c);
     return;
   }
+  case ND_BLOCK:
+    for (Node *n = node->body; n; n = n->next)
+      gen_stmt(n);
+    return;
+  case ND_RETURN:
+    gen_expr(node->lhs);
+    printf("  jmp .L.return\n");
+    return;
   case ND_EXPR_STMT:
     gen_expr(node->lhs);
     return;
@@ -158,6 +157,7 @@ static void gen_stmt(Node *node) {
   error_tok(node->tok, "invalid statement");
 }
 
+// Assign offsets to local varialbes.
 static void assign_lvar_offsets(Function *prog) {
   int offset = 0;
   for (Obj *var = prog->locals; var; var = var->next) {
