@@ -80,12 +80,30 @@ static Type *declspec(Token **rest, Token *tok) {
   return ty_int;
 }
 
-// type-suffix = ("(" func-params)?
+// type-suffix = ("(" func-params? ")")?
+// func-params = param ("," param)*
+// param       = declspec declarator
 static Type *type_suffix(Token **rest, Token *tok, Type *ty) {
   if (equal(tok, "(")) {
-    *rest = skip(tok->next, ")");
-    return func_type(ty);
+    tok = tok->next;
+
+    Type head = {};
+    Type *cur = &head;
+
+    while (!equal(tok, ")")) {
+      if (cur != &head)
+        tok = skip(tok, ",");
+      Type *param_ty = declspec(&tok, tok);
+      param_ty = declarator(&tok, tok, param_ty);
+      cur = cur->next = copy_ty(param_ty);
+    }
+
+    ty = func_type(ty);
+    ty->params = head.next;
+    *rest = tok->next;
+    return ty;
   }
+
   *rest = tok;
   return ty;
 }
@@ -98,7 +116,7 @@ static Type *declarator(Token **rest, Token *tok, Type *ty) {
   if (tok->kind != TK_IDENT)
     error_tok(tok, "expected a variable name");
 
-  type_suffix(rest, tok->next, ty);
+  ty = type_suffix(rest, tok->next, ty);
   ty->name = tok;
   return ty;
 }
@@ -455,6 +473,11 @@ static Node *primary(Token **rest, Token *tok) {
   error_tok(tok, "expected an expression");
 }
 
+static void create_param_lvars(Type *params) {
+  for (Type *p = params; p; p = p->next)
+    new_lvar(get_ident(p->name), p);
+}
+
 static Function *function(Token **rest, Token *tok) {
   Type *ty = declspec(&tok, tok);
   ty = declarator(&tok, tok, ty);
@@ -463,6 +486,8 @@ static Function *function(Token **rest, Token *tok) {
 
   Function *fn = calloc(1, sizeof(Function));
   fn->name = get_ident(ty->name);
+  create_param_lvars(ty->params);
+  fn->params = locals;
 
   tok = skip(tok, "{");
   fn->body = compound_stmt(rest, tok);
