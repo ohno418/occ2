@@ -116,4 +116,11 @@ assert 55 'int main() { return fib(10); } int fib(int n) { if (n <=1) return n; 
 assert 42 'int main() { int x[2]; *x=42; *(x+1)=34; return *x; }'
 assert 34 'int main() { int x[2]; *x=42; *(x+1)=34; return *(x+1); }'
 
+assert 0 'int main() { int x[2][3]; int *y=x; *y=0; return **x; }'
+assert 1 'int main() { int x[2][3]; int *y=x; *(y+1)=1; return *(*x+1); }'
+assert 2 'int main() { int x[2][3]; int *y=x; *(y+2)=2; return *(*x+2); }'
+assert 3 'int main() { int x[2][3]; int *y=x; *(y+3)=3; return **(x+1); }'
+assert 4 'int main() { int x[2][3]; int *y=x; *(y+4)=4; return *(*(x+1)+1); }'
+assert 5 'int main() { int x[2][3]; int *y=x; *(y+5)=5; return *(*(x+1)+2); }'
+
 echo OK
