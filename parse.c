@@ -531,8 +531,10 @@ static Node *primary(Token **rest, Token *tok) {
 }
 
 static void create_param_lvars(Type *params) {
-  for (Type *p = params; p; p = p->next)
-    new_lvar(get_ident(p->name), p);
+  if (params) {
+    create_param_lvars(params->next);
+    new_lvar(get_ident(params->name), params);
+  }
 }
 
 static Token *function(Token *tok, Type *basety) {

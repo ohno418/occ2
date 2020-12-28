@@ -112,6 +112,7 @@ assert 136 'int main() { return add6(1,2,add6(3,add6(4,5,6,7,8,9),10,11,12,13),1
 assert 42 'int main() { return ret42(); } int ret42() { return 42; }'
 assert 6 'int main() { return add3(1,2,3); } int add3(int a, int b, int c) { return a+b+c; }'
 assert 55 'int main() { return fib(10); } int fib(int n) { if (n <=1) return n; return fib(n-2)+fib(n-1); }'
+assert 2 'int main() { return sub3(7,3,2); } int sub3(int a, int b, int c) { return a-b-c; }'
 
 assert 42 'int main() { int x[2]; *x=42; *(x+1)=34; return *x; }'
 assert 34 'int main() { int x[2]; *x=42; *(x+1)=34; return *(x+1); }'
