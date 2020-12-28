@@ -26,6 +26,11 @@ static Obj *find_var(Token *tok) {
   for (Obj *var = locals; var; var = var->next)
     if (tok->len == strlen(var->name) && !strncmp(tok->loc, var->name, tok->len))
       return var;
+
+  for (Obj *var = globals; var; var = var->next)
+    if (tok->len == strlen(var->name) && !strncmp(tok->loc, var->name, tok->len))
+      return var;
+
   return NULL;
 }
 
@@ -547,13 +552,37 @@ static Token *function(Token *tok, Type *basety) {
   return tok;
 }
 
+static Token *global_variable(Token *tok, Type *basety) {
+  Type *ty = declarator(&tok, tok, basety);
+  new_gvar(get_ident(ty->name), ty);
+
+  if (equal(tok, ","))
+    return global_variable(tok->next, basety);
+
+  return skip(tok, ";");
+}
+
+static bool is_function(Token *tok) {
+  Type dummy = {};
+  declarator(&tok, tok, &dummy);
+  return equal(tok, "{");
+}
+
 // program = (function-definition | global-variable)*
 Obj *parse(Token *tok) {
   globals = NULL;
 
   while (tok->kind != TK_EOF) {
-    Type *baesty = declspec(&tok, tok);
-    tok = function(tok, baesty);
+    Type *basety = declspec(&tok, tok);
+
+    // Function
+    if (is_function(tok)) {
+      tok = function(tok, basety);
+      continue;
+    }
+
+    // Global variable
+    tok = global_variable(tok, basety);
   }
   return globals;
 }
