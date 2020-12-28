@@ -43,13 +43,25 @@ Token *tokenize(char *p);
 typedef struct Type Type;
 typedef struct Node Node;
 
-// Local varialbe
+// Varialbe or function
 typedef struct Obj Obj;
 struct Obj {
   Obj *next;
-  char *name;
-  Type *ty;
+  char *name;    // Variable name
+  Type *ty;      // Type
+  bool is_local; // local or global/function
+
+  // Local variable
   int offset;
+
+  // Global varible or function
+  bool is_function;
+
+  // Function
+  Obj *params;
+  Node *body;
+  Obj *locals;
+  int stack_size;
 };
 
 typedef enum {
@@ -103,18 +115,7 @@ struct Node {
   int val;   // Used if kind == ND_NUM
 };
 
-typedef struct Function Function;
-struct Function {
-  Function *next;
-  char *name;
-  Obj *params;
-
-  Node *body;
-  Obj *locals;
-  int stack_size;
-};
-
-Function *parse(Token *tok);
+Obj *parse(Token *tok);
 
 //
 // type.c
@@ -158,4 +159,4 @@ void add_type(Node *node);
 // codegen.c
 //
 
-void codegen(Function *prog);
+void codegen(Obj *prog);
