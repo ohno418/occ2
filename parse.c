@@ -100,8 +100,13 @@ static int get_number(Token *tok) {
   return tok->val;
 }
 
-// declspec = "int"
+// declspec = "char" | "int"
 static Type *declspec(Token **rest, Token *tok) {
+  if (equal(tok, "char")) {
+    *rest = tok->next;
+    return ty_char;
+  }
+
   *rest = skip(tok, "int");
   return ty_int;
 }
@@ -246,6 +251,10 @@ static Node *stmt(Token **rest, Token *tok) {
   return expr_stmt(rest, tok);
 }
 
+static bool is_typename(Token *tok) {
+  return equal(tok, "char") || equal(tok, "int");
+}
+
 // compound_stmt = (declaration | stmt)* "}"
 static Node *compound_stmt(Token **rest, Token *tok) {
   Node *node = new_node(ND_BLOCK ,tok);
@@ -253,7 +262,7 @@ static Node *compound_stmt(Token **rest, Token *tok) {
   Node head = {};
   Node *cur = &head;
   while (!equal(tok, "}")) {
-    if (equal(tok, "int"))
+    if (is_typename(tok))
       cur = cur->next = declaration(&tok, tok);
     else
       cur = cur->next = stmt(&tok, tok);
@@ -353,7 +362,7 @@ static Node *new_add(Node *lhs, Node *rhs, Token *tok) {
   add_type(rhs);
 
   // num + num
-  if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+  if (is_integer(lhs->ty) && is_integer(rhs->ty))
     return new_binary(ND_ADD, lhs, rhs, tok);
 
   // ptr + ptr (error)
@@ -377,11 +386,11 @@ static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
   add_type(rhs);
 
   // num - num
-  if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+  if (is_integer(lhs->ty) && is_integer(rhs->ty))
     return new_binary(ND_SUB, lhs, rhs, tok);
 
   // ptr - num
-  if (lhs->ty->base && rhs->ty->kind == TY_INT) {
+  if (lhs->ty->base && is_integer(rhs->ty)) {
     rhs = new_binary(ND_MUL, rhs, new_num(lhs->ty->base->size, tok), tok);
     return new_binary(ND_SUB, lhs, rhs, tok);
   }

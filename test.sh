@@ -157,4 +157,13 @@ assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
 assert 8 'int x; int main() { return sizeof(x); }'
 assert 32 'int x[4]; int main() { return sizeof(x); }'
 
+assert 1 'int main() { char x=1; return x; }'
+assert 1 'int main() { char x=1; char y=2; return x; }'
+assert 2 'int main() { char x=1; char y=2; return y; }'
+
+assert 1 'int main() { char x; return sizeof(x); }'
+assert 10 'int main() { char x[10]; return sizeof(x); }'
+assert 12 'int main() { return add_char(7, 2, 3); } int add_char(char a, char b, char c) { return a+b+c; }'
+assert 2 'int main() { return sub_char(7, 2, 3); } int sub_char(char a, char b, char c) { return a-b-c; }'
+
 echo OK
