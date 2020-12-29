@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Type Type;
+typedef struct Node Node;
+
 //
 // tokenize.c
 //
@@ -15,6 +18,7 @@ typedef enum {
   TK_IDENT,   // Identifiers
   TK_PUNCT,   // Puctuators
   TK_KEYWORD, // Keywords
+  TK_STR,     // String literal
   TK_NUM,     // Numeric literals
   TK_EOF,     // End-of-file markers
 } TokenKind;
@@ -26,6 +30,8 @@ struct Token {
   int val;   // If token is TK_NUM, its value
   char *loc; // Token location
   int len;   // Token length
+  Type *ty;
+  char *str;
 };
 
 void error(char *fmt, ...);
@@ -40,9 +46,6 @@ Token *tokenize(char *p);
 // parse.c
 //
 
-typedef struct Type Type;
-typedef struct Node Node;
-
 // Varialbe or function
 typedef struct Obj Obj;
 struct Obj {
@@ -56,6 +59,9 @@ struct Obj {
 
   // Global varible or function
   bool is_function;
+
+  // Global variable
+  char *init_data;
 
   // Function
   Obj *params;

@@ -221,22 +221,26 @@ static void emit_data(Obj *prog) {
     if (var->is_function)
       continue;
 
-    printf(".data\n");
-    printf(".globl %s\n", var->name);
+    printf("  .data\n");
+    printf("  .globl %s\n", var->name);
     printf("%s:\n", var->name);
-    printf("  .zero %d\n", var->ty->size);
+
+    if (var->init_data) {
+      for (int i = 0; i < var->ty->size; i++)
+        printf("  .byte %d\n", var->init_data[i]);
+    } else {
+      printf("  .zero %d\n", var->ty->size);
+    }
   }
 }
 
 static void emit_text(Obj *prog) {
-  printf(".intel_syntax noprefix\n");
-
   for (Obj *fn = prog; fn; fn = fn->next) {
     if (!fn->is_function)
       continue;
 
-    printf(".globl %s\n", fn->name);
-    printf(".text\n");
+    printf("  .globl %s\n", fn->name);
+    printf("  .text\n");
     printf("%s:\n", fn->name);
     current_fn = fn;
 
@@ -268,6 +272,7 @@ static void emit_text(Obj *prog) {
 
 void codegen(Obj *prog) {
   assign_lvar_offsets(prog);
+  printf("  .intel_syntax noprefix\n");
   emit_data(prog);
   emit_text(prog);
 }
