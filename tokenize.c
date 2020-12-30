@@ -1,5 +1,8 @@
 #include "occ.h"
 
+// Input filename
+static char *current_filename;
+
 // Input string
 static char *current_input;
 
@@ -12,26 +15,45 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
-void error_at(char *loc, char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  int pos = loc - current_input;
-  fprintf(stderr, "%s\n", current_input);
+// Report an error message in the following format and exit.
+//
+// foo.c:10: x = y + 1;
+//               ^ <error message here>
+static void verror_at(char *loc, char *fmt, va_list ap) {
+  // Find a line containing `loc`.
+  char *line = loc;
+  while (current_input < line && line[-1] != '\n')
+    line--;
+
+  char *end = loc;
+  while (*end != '\n')
+    end++;
+
+  // Get a line number.
+  int line_no = 1;
+  for (char *p = current_input; p < line; p++)
+    if (*p == '\n')
+      line_no++;
+
+  int indent = fprintf(stderr, "%s:%d: ", current_filename, line_no);
+  fprintf(stderr, "%.*s\n", (int)(end - line), line);
+  int pos = loc - line + indent;
   fprintf(stderr, "%*s^ ", pos, "");
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
   exit(1);
 }
 
+void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(loc, fmt, ap);
+}
+
 void error_tok(Token *tok, char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int pos = tok->loc - current_input;
-  fprintf(stderr, "%s\n", current_input);
-  fprintf(stderr, "%*s^ ", pos, "");
-  vfprintf(stderr, fmt, ap);
-  fprintf(stderr, "\n");
-  exit(1);
+  verror_at(tok->loc, fmt, ap);
 }
 
 bool equal(Token *tok, char *op) {
@@ -146,7 +168,8 @@ static void convert_keywords(Token *tok) {
       t->kind = TK_KEYWORD;
 }
 
-Token *tokenize(char *p) {
+static Token *tokenize(char *filename, char *p) {
+  current_filename = filename;
   current_input = p;
   Token head = {};
   Token *cur = &head;
@@ -197,4 +220,45 @@ Token *tokenize(char *p) {
   cur = cur->next = new_token(TK_EOF, p, 0);
   convert_keywords(head.next);
   return head.next;
+}
+
+// Return the contents of a given file.
+static char *read_file(char *path) {
+  FILE *fp;
+
+  if (strcmp(path, "-") == 0) {
+    fp = stdin;
+  } else {
+    fp = fopen(path, "r");
+    if (!fp)
+      error("cannot open %s: %s", path, strerror(errno));
+  }
+
+  char *buf;
+  size_t buflen;
+  FILE *out = open_memstream(&buf, &buflen);
+
+  // Read the entire file.
+  for (;;) {
+    char buf2[4096];
+    int n = fread(buf2, 1, sizeof(buf2), fp);
+    if (n == 0)
+      break;
+    fwrite(buf2, 1, n, out);
+  }
+
+  if (fp != stdin)
+    fclose(fp);
+
+  // Make sure that the last line is properly terminated with '\n'.
+  fflush(out);
+  if (buflen == 0 || buf[buflen - 1] != '\n')
+    fputc('\n', out);
+  fputc('\0', out);
+  fclose(out);
+  return buf;
+}
+
+Token *tokenize_file(char *path) {
+  return tokenize(path, read_file(path));
 }
