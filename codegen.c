@@ -7,6 +7,7 @@ static char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static Obj *current_fn;
 
+static void gen_stmt(Node *node);
 static void gen_expr(Node *node);
 
 static int count(void) {
@@ -109,6 +110,10 @@ static void gen_expr(Node *node) {
     printf("  call %s\n", node->funcname);
     return;
   }
+  case ND_STMT_EXPR:
+    for (Node *stmt = node->body; stmt; stmt = stmt->next)
+      gen_stmt(stmt);
+    return;
   }
 
   gen_expr(node->rhs);
