@@ -28,11 +28,11 @@ typedef struct Token Token;
 struct Token {
   TokenKind kind;
   Token *next;
-  int val;   // If token is TK_NUM, its value
-  char *loc; // Token location
-  int len;   // Token length
-  Type *ty;
-  char *str;
+  int val;     // If token is TK_NUM, its value
+  char *loc;   // Token location
+  int len;     // Token length
+  Type *ty;    // Used if TK_STR
+  char *str;   // String literal contents including terminating '\0'
 };
 
 void error(char *fmt, ...);
