@@ -336,9 +336,15 @@ static Node *expr_stmt(Token **rest, Token *tok) {
   return node;
 }
 
-// expr = assign
+// expr = assign ("," expr)?
 static Node *expr(Token **rest, Token *tok) {
-  return assign(rest, tok);
+  Node *node = assign(&tok, tok);
+
+  if (equal(tok, ","))
+    node = new_binary(ND_COMMA, node, expr(&tok, tok->next), tok);
+
+  *rest = tok;
+  return node;
 }
 
 // assign = equality ("=" assign)?
