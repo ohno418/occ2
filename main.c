@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
   Obj *prog = parse(tok);
 
   // Traverse the AST to emit assembly.
+  printf(".file 1 \"%s\"\n", argv[1]);
   codegen(prog);
 
   return 0;
