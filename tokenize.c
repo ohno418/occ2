@@ -118,6 +118,7 @@ static bool is_keyword(Token *tok) {
 
 static int read_escaped_char(char *p) {
   switch (*p) {
+  case '0': return '\0';
   case 'a': return '\a';
   case 'b': return '\b';
   case 't': return '\t';
