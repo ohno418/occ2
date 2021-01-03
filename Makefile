@@ -15,12 +15,7 @@ test/%.exe: occ test/%.c
 	$(CC) -o $@ test/$*.s test/common.o
 
 test: $(TESTS)
-	./test/arith.exe
-	./test/control.exe
-	./test/function.exe
-	./test/pointer.exe
-	./test/string.exe
-	./test/variable.exe
+	for i in $^; do echo $$i; ./$$i || exit 1; echo; done
 
 clean:
 	rm -f occ *.o tmp* test/*.o test/*.s test/*.exe
