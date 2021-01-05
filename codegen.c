@@ -230,7 +230,6 @@ static void assign_lvar_offsets(Obj *prog) {
 
     int offset = 0;
     for (Obj *var = fn->locals; var; var = var->next) {
-      // FIXME: Varialbe order is reverse!!
       offset += var->ty->size;
       var->offset = -offset;
     }
