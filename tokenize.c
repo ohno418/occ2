@@ -101,7 +101,8 @@ static bool is_ident2(char c) {
 
 static int read_punct_len(char *p) {
   if (starts_with(p, "==") || starts_with(p, "!=") ||
-      starts_with(p, "<=") || starts_with(p, ">="))
+      starts_with(p, "<=") || starts_with(p, ">=") ||
+      starts_with(p, "->"))
     return 2;
 
   return ispunct(*p) ? 1 : 0;
