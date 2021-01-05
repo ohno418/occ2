@@ -4,6 +4,7 @@ static int depth;
 // x86_64 calling convention
 // (https://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_calling_conventions)
 static char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
+static char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static Obj *current_fn;
 
@@ -63,6 +64,8 @@ static void load(Type *ty) {
 
   if (ty->size == 1)
     printf("  movsbq rax, [rax]\n");
+  else if (ty->size == 4)
+    printf("  movsxd rax, [rax]\n");
   else
     printf("  mov rax, [rax]\n");
 }
@@ -73,6 +76,8 @@ static void store(Type *ty) {
 
   if (ty->size == 1)
     printf("  mov [rdi], al\n");
+  else if (ty->size == 4)
+    printf("  mov [rdi], eax\n");
   else
     printf("  mov [rdi], rax\n");
 }
@@ -256,6 +261,22 @@ static void emit_data(Obj *prog) {
   }
 }
 
+static void store_gp(int r, int offset, int sz) {
+  switch (sz) {
+  case 1:
+    printf("  mov [rbp-%d], %s\n", offset, argreg8[r]);
+    return;
+  case 4:
+    printf("  mov [rbp-%d], %s\n", offset, argreg32[r]);
+    return;
+  case 8:
+    printf("  mov [rbp-%d], %s\n", offset, argreg64[r]);
+    return;
+  default:
+    error("internal error");
+  }
+}
+
 static void emit_text(Obj *prog) {
   for (Obj *fn = prog; fn; fn = fn->next) {
     if (!fn->is_function)
@@ -273,12 +294,8 @@ static void emit_text(Obj *prog) {
 
     // Save passed-by-register arguments to the stack.
     int i = 0;
-    for (Obj *var = fn->params; var; var = var->next) {
-      if (var->ty->size == 1)
-        printf("  mov [rbp-%d], %s\n", -var->offset, argreg8[i++]);
-      else
-        printf("  mov [rbp-%d], %s\n", -var->offset, argreg64[i++]);
-    }
+    for (Obj *var = fn->params; var; var = var->next)
+      store_gp(i++, -var->offset, var->ty->size);
 
     // Emit code
     gen_stmt(fn->body);
