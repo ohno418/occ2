@@ -172,11 +172,16 @@ static void push_tag_scope(char *name, Type *ty) {
   scope->tags = sc;
 }
 
-// declspec = "char" | "int" | "long" | "struct" struct-decl
+// declspec = "char" | "short" | "int" | "long" | "struct" struct-decl
 static Type *declspec(Token **rest, Token *tok) {
   if (equal(tok, "char")) {
     *rest = tok->next;
     return ty_char;
+  }
+
+  if (equal(tok, "short")) {
+    *rest = skip(tok, "short");
+    return ty_short;
   }
 
   if (equal(tok, "int")) {
@@ -336,7 +341,8 @@ static Node *stmt(Token **rest, Token *tok) {
 }
 
 static bool is_typename(Token *tok) {
-  return equal(tok, "char") || equal(tok, "int") || equal(tok, "long") || equal(tok, "struct");
+  return equal(tok, "char") || equal(tok, "short") || equal(tok, "int") ||
+         equal(tok, "long") || equal(tok, "struct");
 }
 
 // compound_stmt = (declaration | stmt)* "}"

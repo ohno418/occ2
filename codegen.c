@@ -4,6 +4,7 @@ static int depth;
 // x86_64 calling convention
 // (https://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_calling_conventions)
 static char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
+static char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
 static char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static Obj *current_fn;
@@ -64,6 +65,8 @@ static void load(Type *ty) {
 
   if (ty->size == 1)
     printf("  movsbq rax, [rax]\n");
+  else if (ty->size == 2)
+    printf("  movswq rax, [rax]\n");
   else if (ty->size == 4)
     printf("  movsxd rax, [rax]\n");
   else
@@ -76,6 +79,8 @@ static void store(Type *ty) {
 
   if (ty->size == 1)
     printf("  mov [rdi], al\n");
+  else if (ty->size == 2)
+    printf("  mov [rdi], ax\n");
   else if (ty->size == 4)
     printf("  mov [rdi], eax\n");
   else
@@ -265,6 +270,9 @@ static void store_gp(int r, int offset, int sz) {
   switch (sz) {
   case 1:
     printf("  mov [rbp-%d], %s\n", offset, argreg8[r]);
+    return;
+  case 2:
+    printf("  mov [rbp-%d], %s\n", offset, argreg16[r]);
     return;
   case 4:
     printf("  mov [rbp-%d], %s\n", offset, argreg32[r]);
