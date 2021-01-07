@@ -164,7 +164,7 @@ static int get_number(Token *tok) {
   return tok->val;
 }
 
-static void *push_tag_scope(char *name, Type *ty) {
+static void push_tag_scope(char *name, Type *ty) {
   TagScope *sc = calloc(1, sizeof(TagScope));
   sc->name = name;
   sc->ty = ty;
