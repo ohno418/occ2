@@ -770,6 +770,10 @@ static Token *function(Token *tok, Type *basety) {
 
   Obj *fn = new_gvar(get_ident(ty->name), ty);
   fn->is_function = true;
+  fn->is_definition = !consume(&tok, tok, ";");
+
+  if (!fn->is_definition)
+    return tok;
 
   locals = NULL;
   enter_scope();
@@ -795,8 +799,8 @@ static Token *global_variable(Token *tok, Type *basety) {
 
 static bool is_function(Token *tok) {
   Type dummy = {};
-  declarator(&tok, tok, &dummy);
-  return equal(tok, "{");
+  Type *ty = declarator(&tok, tok, &dummy);
+  return ty->kind == TY_FUNC;
 }
 
 // program = (function-definition | global-variable)*
