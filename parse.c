@@ -172,8 +172,14 @@ static void push_tag_scope(char *name, Type *ty) {
   scope->tags = sc;
 }
 
-// declspec = "char" | "short" | "int" | "long" | "struct" struct-decl
+// declspec = "void" | "char" | "short" | "int" | "long"
+//          | "struct" struct-decl
 static Type *declspec(Token **rest, Token *tok) {
+  if (equal(tok, "void")) {
+    *rest = tok->next;
+    return ty_void;
+  }
+
   if (equal(tok, "char")) {
     *rest = tok->next;
     return ty_char;
@@ -264,6 +270,9 @@ static Node *declaration(Token **rest, Token *tok) {
       tok = skip(tok, ",");
 
     Type *ty = declarator(&tok, tok, basety);
+    if (ty->kind == TY_VOID)
+      error_tok(tok, "variable declared void");
+
     Obj *var = new_lvar(get_ident(ty->name), ty);
 
     if (!equal(tok, "="))
@@ -341,8 +350,8 @@ static Node *stmt(Token **rest, Token *tok) {
 }
 
 static bool is_typename(Token *tok) {
-  return equal(tok, "char") || equal(tok, "short") || equal(tok, "int") ||
-         equal(tok, "long") || equal(tok, "struct");
+  return equal(tok, "void") || equal(tok, "char") || equal(tok, "short") ||
+         equal(tok, "int") || equal(tok, "long") || equal(tok, "struct");
 }
 
 // compound_stmt = (declaration | stmt)* "}"
