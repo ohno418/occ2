@@ -87,7 +87,7 @@ static void gen_expr(Node *node) {
 
   switch (node->kind) {
   case ND_NUM:
-    printf("  mov rax, %d\n", node->val);
+    printf("  mov rax, %ld\n", node->val);
     return;
   case ND_NEG:
     gen_expr(node->lhs);
