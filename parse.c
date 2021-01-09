@@ -116,7 +116,7 @@ static Node *new_var_node(Obj *var, Token *tok) {
   return node;
 }
 
-static Node *new_cast(Node *expr, Type *ty) {
+Node *new_cast(Node *expr, Type *ty) {
   add_type(expr);
 
   Node *node = calloc(1, sizeof(Node));
