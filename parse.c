@@ -757,6 +757,7 @@ static Node *funcall(Token **rest, Token *tok) {
 
 // primary = "(" "{" stmt* "}" ")"
 //         | "(" expr ")"
+//         | "sizeof" "(" type-name ")"
 //         | "sizeof" unary
 //         | ident func-args?
 //         | str
@@ -774,6 +775,13 @@ static Node *primary(Token **rest, Token *tok) {
     Node *node = expr(&tok, tok->next);
     *rest = skip(tok, ")");
     return node;
+  }
+
+  if (equal(tok, "sizeof") && equal(tok->next, "(") &&
+      is_typename(tok->next->next)) {
+    Type *ty = declspec(&tok, tok->next->next, NULL);
+    *rest = skip(tok, ")");
+    return new_num(ty->size, tok);
   }
 
   if (equal(tok, "sizeof")) {
