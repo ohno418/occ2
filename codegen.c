@@ -146,25 +146,37 @@ static void gen_expr(Node *node) {
   gen_expr(node->lhs);
   pop("rdi");          // lhs on rdi
 
+  char *ax, *di;
+  if (node->lhs->ty->kind == TY_LONG || node->lhs->ty->base) {
+    ax = "rax";
+    di = "rdi";
+  } else {
+    ax = "eax";
+    di = "edi";
+  }
+
   switch (node->kind) {
   case ND_ADD:
-    printf("  add rax, rdi\n");
+    printf("  add %s, %s\n", ax, di);
     return;
   case ND_SUB:
-    printf("  sub rax, rdi\n");
+    printf("  sub %s, %s\n", ax, di);
     return;
   case ND_MUL:
-    printf("  imul rax, rdi\n");
+    printf("  imul %s, %s\n", ax, di);
     return;
   case ND_DIV:
-    printf("  cqo\n");
-    printf("  idiv rdi\n");
+    if (node->lhs->ty->size == 8)
+      printf("  cqo\n");
+    else
+      printf("  cdq\n");
+    printf("  idiv %s\n", di);
     return;
   case ND_EQ:
   case ND_NE:
   case ND_LT:
   case ND_LE:
-    printf("  cmp rax, rdi\n");
+    printf("  cmp %s, %s\n", ax, di);
 
     if (node->kind == ND_EQ)
       printf("  sete al\n");
