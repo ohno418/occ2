@@ -87,6 +87,43 @@ static void store(Type *ty) {
     printf("  mov [rdi], rax\n");
 }
 
+enum { I8, I16, I32, I64 };
+
+static int get_type_id(Type *ty) {
+  switch (ty->kind) {
+  case TY_CHAR:
+    return I8;
+  case TY_SHORT:
+    return I16;
+  case TY_INT:
+    return I32;
+  }
+  return I64;
+}
+
+// The table for type casts
+static char i32i8[] = "movsbl eax, al";
+static char i32i16[] = "movswl eax, ax";
+static char i32i64[] = "movsxd rax, eax";
+
+static char *cast_table[][10] = {
+  {NULL,  NULL,   NULL, i32i64}, // i8
+  {i32i8, NULL,   NULL, i32i64}, // i16
+  {i32i8, i32i16, NULL, i32i64}, // i32
+  {i32i8, i32i16, NULL, NULL},   // i64
+};
+
+static void cast(Type *from, Type *to) {
+  if (to->kind == TY_VOID)
+    return;
+
+  int t1 = get_type_id(from);
+  int t2 = get_type_id(to);
+
+  if (cast_table[t1][t2])
+    printf("  %s\n", cast_table[t1][t2]);
+}
+
 static void gen_expr(Node *node) {
   printf("  .loc 1 %d\n", node->tok->line_no);
 
@@ -119,6 +156,10 @@ static void gen_expr(Node *node) {
   case ND_COMMA:
     gen_expr(node->lhs);
     gen_expr(node->rhs);
+    return;
+  case ND_CAST:
+    gen_expr(node->lhs);
+    cast(node->lhs->ty, node->ty);
     return;
   case ND_FUNCALL: {
     int nargs = 0;

@@ -100,6 +100,7 @@ typedef enum {
   ND_STMT_EXPR, // Statement expression (a GNU C extension)
   ND_VAR,       // Varialbe
   ND_NUM,       // Integer
+  ND_CAST,      // Type cast
 } NodeKind;
 
 // AST node
