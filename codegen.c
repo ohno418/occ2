@@ -113,9 +113,23 @@ static char *cast_table[][10] = {
   {i32i8, i32i16, NULL, NULL},   // i64
 };
 
+static void cmp_zero(Type *ty) {
+  if (is_integer(ty) && ty->size <= 4)
+    printf("  cmp eax, 0\n");
+  else
+    printf("  cmp rax, 0\n");
+}
+
 static void cast(Type *from, Type *to) {
   if (to->kind == TY_VOID)
     return;
+
+  if (to->kind == TY_BOOL) {
+    cmp_zero(from);
+    printf("  setne al\n");
+    printf("  movzx rax, al\n");
+    return;
+  }
 
   int t1 = get_type_id(from);
   int t2 = get_type_id(to);

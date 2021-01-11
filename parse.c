@@ -203,12 +203,17 @@ static void push_tag_scope(char *name, Type *ty) {
   scope->tags = sc;
 }
 
-// declspec = "void" | "char" | "short" | "int" | "long"
+// declspec = "void" | "_Bool" | "char" | "short" | "int" | "long"
 //          | "typedef" | "struct" struct-decl | typedef-name
 static Type *declspec(Token **rest, Token *tok, VarAttr *attr) {
   if (equal(tok, "void")) {
     *rest = tok->next;
     return ty_void;
+  }
+
+  if (equal(tok, "_Bool")) {
+    *rest = tok->next;
+    return ty_bool;
   }
 
   if (equal(tok, "char")) {
@@ -399,9 +404,9 @@ static Node *stmt(Token **rest, Token *tok) {
 }
 
 static bool is_typename(Token *tok) {
-  if (equal(tok, "void") || equal(tok, "char") || equal(tok, "short") ||
-      equal(tok, "int") || equal(tok, "long") || equal(tok, "struct") ||
-      equal(tok, "typedef"))
+  if (equal(tok, "void") || equal(tok, "_Bool") || equal(tok, "char") ||
+      equal(tok, "short") || equal(tok, "int") || equal(tok, "long") ||
+      equal(tok, "struct") || equal(tok, "typedef"))
     return true;
   return find_typedef(tok);
 }
