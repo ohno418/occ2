@@ -250,10 +250,10 @@ static Type *declspec(Token **rest, Token *tok, VarAttr *attr) {
   }
 
   // Handle user-defined types.
-  Type *ty = find_typedef(tok);
-  if (ty) {
+  Type *type_def = find_typedef(tok);
+  if (type_def) {
     *rest = tok->next;
-    return ty;
+    return type_def;
   }
 
   error_tok(tok, "typename expected");
