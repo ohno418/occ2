@@ -67,7 +67,7 @@ static void leave_scope(void) {
   scope = scope->next;
 }
 
-// Find a loval variable by name.
+// Find a variable by name.
 static VarScope *find_var(Token *tok) {
   for (Scope *sc = scope; sc; sc = sc->next)
     for (VarScope *vs = sc->vars; vs; vs = vs->next)
@@ -765,6 +765,13 @@ static Node *funcall(Token **rest, Token *tok) {
   Token *start = tok;
   tok = tok->next->next;
 
+  VarScope *sc = find_var(start);
+  if (!sc)
+    error_tok(start, "implicit declaration of a function");
+  if (!sc->var || sc->var->ty->kind != TY_FUNC)
+    error_tok(start, "not a function");
+
+  Type *ty = sc->var->ty->return_ty;
   Node head = {};
   Node *cur = &head;
 
@@ -772,11 +779,13 @@ static Node *funcall(Token **rest, Token *tok) {
     if (cur != &head)
       tok = skip(tok, ",");
     cur = cur->next = assign(&tok, tok);
+    add_type(cur);
   }
   *rest = skip(tok, ")");
 
   Node *node = new_node(ND_FUNCALL, start);
   node->funcname = strndup(start->loc, start->len);
+  node->ty = ty;
   node->args = head.next;
   return node;
 }
