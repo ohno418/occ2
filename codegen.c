@@ -357,7 +357,10 @@ static void emit_text(Obj *prog) {
     if (!fn->is_function || !fn->is_definition)
       continue;
 
-    printf("  .globl %s\n", fn->name);
+    if (fn->is_static)
+      printf("  .local %s\n", fn->name);
+    else
+      printf("  .globl %s\n", fn->name);
     printf("  .text\n");
     printf("%s:\n", fn->name);
     current_fn = fn;
