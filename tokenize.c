@@ -100,10 +100,13 @@ static bool is_ident2(char c) {
 }
 
 static int read_punct_len(char *p) {
-  if (starts_with(p, "==") || starts_with(p, "!=") ||
-      starts_with(p, "<=") || starts_with(p, ">=") ||
-      starts_with(p, "->"))
-    return 2;
+  static char *kw[] = {
+    "==", "!=", "<=", ">=", "->",
+  };
+
+  for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
+    if (starts_with(p, kw[i]))
+      return strlen(kw[i]);
 
   return ispunct(*p) ? 1 : 0;
 }
