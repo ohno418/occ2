@@ -373,7 +373,7 @@ static Type *enum_specifier(Token **rest, Token *tok) {
   return ty;
 }
 
-// declaration = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
+// declaration = (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
 static Node *declaration(Token **rest, Token *tok, Type *basety) {
   Node head = {};
   Node *cur = &head;
@@ -402,6 +402,15 @@ static Node *declaration(Token **rest, Token *tok, Type *basety) {
   node->body = head.next;
   *rest = skip(tok, ";");
   return node;
+}
+
+static bool is_typename(Token *tok) {
+  if (equal(tok, "void") || equal(tok, "_Bool") || equal(tok, "char") ||
+      equal(tok, "short") || equal(tok, "int") || equal(tok, "long") ||
+      equal(tok, "struct") || equal(tok, "typedef") || equal(tok, "enum") ||
+      equal(tok, "static"))
+    return true;
+  return find_typedef(tok);
 }
 
 // stmt = "return" expr ";"
@@ -437,7 +446,13 @@ static Node *stmt(Token **rest, Token *tok) {
     Node *node = new_node(ND_FOR, tok);
     tok = skip(tok->next, "(");
 
-    node->init = expr_stmt(&tok, tok);
+    enter_scope();
+    if (is_typename(tok)) {
+      Type *basety = declspec(&tok, tok, NULL);
+      node->init = declaration(&tok, tok, basety);
+    } else {
+      node->init = expr_stmt(&tok, tok);
+    }
 
     if (!equal(tok, ";"))
       node->cond = expr(&tok, tok);
@@ -448,6 +463,7 @@ static Node *stmt(Token **rest, Token *tok) {
     tok = skip(tok, ")");
 
     node->then = stmt(rest, tok);
+    leave_scope();
     return node;
   }
 
@@ -464,15 +480,6 @@ static Node *stmt(Token **rest, Token *tok) {
     return compound_stmt(rest, tok->next);
 
   return expr_stmt(rest, tok);
-}
-
-static bool is_typename(Token *tok) {
-  if (equal(tok, "void") || equal(tok, "_Bool") || equal(tok, "char") ||
-      equal(tok, "short") || equal(tok, "int") || equal(tok, "long") ||
-      equal(tok, "struct") || equal(tok, "typedef") || equal(tok, "enum") ||
-      equal(tok, "static"))
-    return true;
-  return find_typedef(tok);
 }
 
 // compound_stmt = (typedef | declaration | stmt)* "}"
