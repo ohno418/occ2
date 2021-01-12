@@ -743,6 +743,7 @@ static Node *cast(Token **rest, Token *tok) {
 }
 
 // unary = ("+" | "-" | "*" | "&") cast
+//       | ("++" | "--") unary
 //       | postfix
 static Node *unary(Token **rest, Token *tok) {
   if (equal(tok, "+"))
@@ -756,6 +757,28 @@ static Node *unary(Token **rest, Token *tok) {
 
   if (equal(tok, "&"))
     return new_unary(ND_ADDR, cast(rest, tok->next), tok);
+
+  // Read ++i as i+=1
+  if (equal(tok, "++")) {
+    Node *var_node = unary(rest, tok->next);
+    return new_binary(
+      ND_ASSIGN,
+      var_node,
+      new_add(new_num(1, tok), var_node, tok),
+      tok
+    );
+  }
+
+  // Read --i as i-=1
+  if (equal(tok, "--")) {
+    Node *var_node = unary(rest, tok->next);
+    return new_binary(
+      ND_ASSIGN,
+      var_node,
+      new_sub(var_node, new_num(1, tok), tok),
+      tok
+    );
+  }
 
   return postfix(rest, tok);
 }
