@@ -764,7 +764,7 @@ static Node *unary(Token **rest, Token *tok) {
     return new_binary(
       ND_ASSIGN,
       var_node,
-      new_add(new_num(1, tok), var_node, tok),
+      new_add(var_node, new_num(1, tok), tok),
       tok
     );
   }
@@ -865,7 +865,7 @@ static Node *struct_ref(Node *lhs, Token *tok) {
   return node;
 }
 
-// postfix = primary ("[" expr "]" | "." ident | "->" ident)*
+// postfix = primary ("[" expr "]" | "." ident | "->" ident | "++" | "--")*
 static Node *postfix(Token **rest, Token *tok) {
   Node *node = primary(&tok, tok);
 
@@ -890,6 +890,49 @@ static Node *postfix(Token **rest, Token *tok) {
       node = new_unary(ND_DEREF, node, tok);
       node = struct_ref(node, tok->next);
       tok = tok->next->next;
+      continue;
+    }
+
+    // Convert A++ to `(typeof A)((A += 1) - 1)`
+    if (equal(tok, "++")) {
+      add_type(node);
+      node =
+        new_cast(
+          new_sub(
+            new_binary(
+              ND_ASSIGN,
+              node,
+              new_add(node, new_num(1, tok), tok),
+              tok
+            ),
+            new_num(1, tok),
+            tok
+          ),
+          node->ty
+        );
+      tok = tok->next;
+      *rest = tok;
+      continue;
+    }
+
+    // Convert A-- to `(typeof A)((A -= 1) + 1)`
+    if (equal(tok, "--")) {
+      add_type(node);
+      node = new_cast(
+        new_add(
+          new_binary(
+            ND_ASSIGN,
+            node,
+            new_sub(node, new_num(1, tok), tok),
+            tok
+          ),
+          new_num(1, tok),
+          tok
+        ),
+        node->ty
+      );
+      tok = tok->next;
+      *rest = tok;
       continue;
     }
 
