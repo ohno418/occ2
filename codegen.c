@@ -204,6 +204,36 @@ static void gen_expr(Node *node) {
     gen_expr(node->lhs);
     printf("not rax\n");
     return;
+  case ND_LOGAND: {
+    int c = count();
+    gen_expr(node->lhs);
+    printf("  cmp rax, 0\n");
+    printf("  je .L.false.%d\n", c);
+    gen_expr(node->rhs);
+    printf("  cmp rax, 0\n");
+    printf("  je .L.false.%d\n", c);
+    printf("  mov rax, 1\n");
+    printf("  jmp .L.end.%d\n", c);
+    printf(".L.false.%d:\n", c);
+    printf("  mov rax, 0\n");
+    printf(".L.end.%d:\n", c);
+    return;
+  }
+  case ND_LOGOR: {
+    int c = count();
+    gen_expr(node->lhs);
+    printf("  cmp rax, 0\n");
+    printf("  jne .L.true.%d\n", c);
+    gen_expr(node->rhs);
+    printf("  cmp rax, 0\n");
+    printf("  jne .L.true.%d\n", c);
+    printf("  mov rax, 0\n");
+    printf("  jmp .L.end.%d\n", c);
+    printf(".L.true.%d:\n", c);
+    printf("  mov rax, 1\n");
+    printf(".L.end.%d:\n", c);
+    return;
+  }
   }
 
   gen_expr(node->rhs);

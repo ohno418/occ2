@@ -54,6 +54,8 @@ static Node *stmt(Token **rest, Token *tok);
 static Node *expr_stmt(Token **rest, Token *tok);
 static Node *expr(Token **rest, Token *tok);
 static Node *assign(Token **rest, Token *tok);
+static Node *logor(Token **rest, Token *tok);
+static Node *logand(Token **rest, Token *tok);
 static Node *equality(Token **rest, Token *tok);
 static Node *relational(Token **rest, Token *tok);
 static Node *add(Token **rest, Token *tok);
@@ -586,10 +588,10 @@ static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
   error_tok(tok, "invalid operands");
 }
 
-// assign    = equality (assign-op assign)?
+// assign    = logor (assign-op assign)?
 // assign-op = "=" | "+=" | "-=" | "*=" | "/="
 static Node *assign(Token **rest, Token *tok) {
-  Node *node = equality(&tok, tok);
+  Node *node = logor(&tok, tok);
 
   if (equal(tok, "="))
     return new_binary(ND_ASSIGN, node, assign(rest, tok->next), tok);
@@ -626,6 +628,28 @@ static Node *assign(Token **rest, Token *tok) {
       tok
     );
 
+  *rest = tok;
+  return node;
+}
+
+// logor = logand ("||" logand)*
+static Node *logor(Token **rest, Token *tok) {
+  Node *node = logand(&tok, tok);
+  while (equal(tok, "||")) {
+    Token *start = tok;
+    node = new_binary(ND_LOGOR, node, equality(&tok, tok->next), start);
+  }
+  *rest = tok;
+  return node;
+}
+
+// logand = equality ("&&" equality)*
+static Node *logand(Token **rest, Token *tok) {
+  Node *node = equality(&tok, tok);
+  while (equal(tok, "&&")) {
+    Token *start = tok;
+    node = new_binary(ND_LOGAND, node, equality(&tok, tok->next), start);
+  }
   *rest = tok;
   return node;
 }
