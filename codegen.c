@@ -200,6 +200,10 @@ static void gen_expr(Node *node) {
     printf("sete al\n");
     printf("movzx rax, al\n");
     return;
+  case ND_BITNOT:
+    gen_expr(node->lhs);
+    printf("not rax\n");
+    return;
   }
 
   gen_expr(node->rhs);
