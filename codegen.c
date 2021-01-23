@@ -194,6 +194,12 @@ static void gen_expr(Node *node) {
     for (Node *stmt = node->body; stmt; stmt = stmt->next)
       gen_stmt(stmt);
     return;
+  case ND_NOT:
+    gen_expr(node->lhs);
+    printf("cmp rax, 0\n");
+    printf("sete al\n");
+    printf("movzx rax, al\n");
+    return;
   }
 
   gen_expr(node->rhs);
