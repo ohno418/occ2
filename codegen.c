@@ -314,13 +314,13 @@ static void gen_stmt(Node *node) {
     if (node->cond) {
       gen_expr(node->cond);
       printf("  cmp rax, 0\n");
-      printf("  je .L.end.%d\n", c);
+      printf("  je %s\n", node->brk_label);
     }
     gen_stmt(node->then);
     if (node->inc)
       gen_expr(node->inc);
     printf("  jmp .L.begin.%d\n", c);
-    printf(".L.end.%d:\n", c);
+    printf("%s:\n", node->brk_label);
     return;
   }
   case ND_BLOCK:
