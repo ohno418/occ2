@@ -317,6 +317,7 @@ static void gen_stmt(Node *node) {
       printf("  je %s\n", node->brk_label);
     }
     gen_stmt(node->then);
+    printf("%s:\n", node->cont_label);
     if (node->inc)
       gen_expr(node->inc);
     printf("  jmp .L.begin.%d\n", c);
