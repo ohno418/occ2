@@ -142,6 +142,8 @@ static void gen_expr(Node *node) {
   printf("  .loc 1 %d\n", node->tok->line_no);
 
   switch (node->kind) {
+  case ND_NULL_EXPR:
+    return;
   case ND_NUM:
     printf("  mov rax, %ld\n", node->val);
     return;
